@@ -13,44 +13,28 @@ const app = express();
 
 // -------------------- CORS CONFIG --------------------
 const allowedOrigins = [
-  'http://localhost:5173',                             // local dev
-  'https://todo-frontend-three-lac.vercel.app'         // your production frontend
+  'http://localhost:5173',
+  'https://todo-frontend-three-lac.vercel.app'
 ];
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const allowedOrigins = ['https://todo-frontend-three-lac.vercel.app'];
 
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow mobile, postman, SSR
 
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  next();
-});
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // mobile apps / postman
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error("CORS blocked: " + origin));
-    },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true, // 🔥 very important for cookies/tokens
-  })
-);
-
-// Preflight OPTIONS
-app.options('*', cors({
-  origin: allowedOrigins,
+    console.log("❌ CORS BLOCKED:", origin);
+    return callback(null, false); // do not throw errors
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // -------------------- MIDDLEWARE --------------------
 app.use(express.json());
