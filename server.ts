@@ -2,45 +2,55 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
-import authRoutes from './routes/authRoutes';
-import todoRoutes from './routes/todoRoutes';
-import { connectDB } from './config/db';
-import { errorHandler } from './middleware/errorHandler';
+import authRoutes from './routes/authRoutes.js';
+import todoRoutes from './routes/todoRoutes.js';
+import { connectDB } from './config/db.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
 
 const app = express();
 
-// Allowed frontend origin - production and local dev
-const allowedOrigin = 'https://todo-frontend-three-lac.vercel.app';                
+// -------------------- CORS CONFIG --------------------
+const allowedOrigins = [
+  'http://localhost:5173',                             // local dev
+  'https://todo-frontend-three-lac.vercel.app'         // your production frontend
+];
 
-// CORS middleware setup
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // mobile apps / postman
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("CORS blocked: " + origin));
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: false,
+    credentials: true, // 🔥 very important for cookies/tokens
   })
 );
 
-// Preflight OPTIONS requests ke liye cors
-app.options('*', cors({ origin: allowedOrigin }));
+// Preflight OPTIONS
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
 
-// Body parser middleware
+// -------------------- MIDDLEWARE --------------------
 app.use(express.json());
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/todos', todoRoutes);
+// -------------------- ROUTES --------------------
+app.use('/auth', authRoutes);
+app.use('/todos', todoRoutes);
 
-// Error handler (last middleware)
+// Global Error Handler
 app.use(errorHandler);
 
-// Connect DB and start server
+// -------------------- START SERVER --------------------
 const PORT = process.env.PORT || 5000;
+
 connectDB().then(() => {
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
   });
 });
