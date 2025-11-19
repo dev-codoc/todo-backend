@@ -12,10 +12,7 @@ dotenv.config();
 const app = express();
 
 // Allowed frontend origin - production and local dev
-const allowedOrigin =
-  process.env.NODE_ENV === 'production'
-    ? 'https://todo-frontend-three-lac.vercel.app'  // apni frontend Vercel URL
-    : 'http://localhost:5173';                       // local vite dev server
+const allowedOrigin = 'https://todo-frontend-three-lac.vercel.app';                
 
 // CORS middleware setup
 app.use(
